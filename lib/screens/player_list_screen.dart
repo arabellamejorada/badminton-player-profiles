@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import '../models/player.dart';
 import '../services/player_service.dart';
 import '../widgets/player_card.dart';
+import '../widgets/edit_player_bottom_sheet.dart';
+import 'add_player_screen.dart';
+import 'dart:async';
 
 class PlayerListScreen extends StatefulWidget {
   const PlayerListScreen({super.key});
@@ -12,7 +15,10 @@ class PlayerListScreen extends StatefulWidget {
 
 class _PlayerListScreenState extends State<PlayerListScreen> {
   List<Player> players = [];
+  List<Player> filteredPlayers = [];
   bool isLoading = true;
+  final TextEditingController _searchController = TextEditingController();
+  Timer? _debounce;
 
   @override
   void initState() {
@@ -20,11 +26,23 @@ class _PlayerListScreenState extends State<PlayerListScreen> {
     _loadPlayers();
   }
 
+  @override
+  void dispose() {
+    _searchController.dispose();
+    _debounce?.cancel();
+    super.dispose();
+  }
+
   Future<void> _loadPlayers() async {
     try {
+      setState(() {
+        isLoading = true;
+      });
+      
       final loadedPlayers = await PlayerService.getPlayers();
       setState(() {
         players = loadedPlayers;
+        filteredPlayers = loadedPlayers;
         isLoading = false;
       });
     } catch (e) {
@@ -32,9 +50,94 @@ class _PlayerListScreenState extends State<PlayerListScreen> {
         isLoading = false;
       });
       // Handle error
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error loading players: $e')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error loading players: $e')),
+        );
+      }
+    }
+  }
+
+  void _onSearchChanged(String query) {
+    if (_debounce?.isActive ?? false) _debounce!.cancel();
+    _debounce = Timer(const Duration(milliseconds: 500), () async {
+      try {
+        final results = await PlayerService.searchPlayers(query);
+        setState(() {
+          filteredPlayers = results;
+        });
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error searching players: $e')),
+          );
+        }
+      }
+    });
+  }
+
+  Future<bool> _confirmDelete(BuildContext context, Player player) async {
+    return await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Confirm Deletion'),
+          content: Text('Are you sure you want to delete ${player.nickname}?'),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text('Delete', style: TextStyle(color: Colors.red)),
+            ),
+          ],
+        );
+      },
+    ) ?? false;
+  }
+
+  Future<void> _deletePlayer(String playerId) async {
+    try {
+      setState(() {
+        isLoading = true;
+      });
+      
+      final success = await PlayerService.deletePlayer(playerId);
+      
+      if (mounted) {
+        if (success) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Player deleted successfully')),
+          );
+          _loadPlayers();
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Failed to delete player')),
+          );
+          setState(() {
+            isLoading = false;
+          });
+        }
+      }
+    } catch (e) {
+      setState(() {
+        isLoading = false;
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error deleting player: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _showEditPlayerBottomSheet(Player player) async {
+    final result = await EditPlayerBottomSheet.show(context, player.id);
+    
+    if (result == true) {
+      _loadPlayers();
     }
   }
 
@@ -53,8 +156,10 @@ class _PlayerListScreenState extends State<PlayerListScreen> {
             padding: const EdgeInsets.all(16),
             color: const Color(0xFF004E89),
             child: TextField(
+              controller: _searchController,
+              onChanged: _onSearchChanged,
               decoration: InputDecoration(
-                hintText: 'Search players...',
+                hintText: 'Search by nickname or name...',
                 hintStyle: const TextStyle(color: Color(0xFFEFEFD0)),
                 filled: true,
                 fillColor: Colors.white.withOpacity(0.1),
@@ -66,10 +171,15 @@ class _PlayerListScreenState extends State<PlayerListScreen> {
                   Icons.search,
                   color: Color(0xFFEFEFD0),
                 ),
-                suffixIcon: const Icon(
-                  Icons.filter_list,
-                  color: Color(0xFFEFEFD0),
-                ),
+                suffixIcon: _searchController.text.isNotEmpty
+                  ? IconButton(
+                      icon: const Icon(Icons.clear, color: Color(0xFFEFEFD0)),
+                      onPressed: () {
+                        _searchController.clear();
+                        _onSearchChanged('');
+                      },
+                    )
+                  : null,
               ),
               style: const TextStyle(color: Color(0xFFEFEFD0)),
             ),
@@ -81,20 +191,35 @@ class _PlayerListScreenState extends State<PlayerListScreen> {
                 ? const Center(
                     child: CircularProgressIndicator(),
                   )
-                : players.isEmpty
+                : filteredPlayers.isEmpty
                     ? const Center(
                         child: Text('No players found'),
                       )
                     : ListView.builder(
-                        itemCount: players.length,
+                        itemCount: filteredPlayers.length,
                         itemBuilder: (context, index) {
-                          final player = players[index];
-                          return PlayerCard(
-                            player: player,
-                            onTap: () {
-                              // TODO: Navigate to player details
-                              print('Tapped on ${player.nickname}');
+                          final player = filteredPlayers[index];
+                          return Dismissible(
+                            key: Key(player.id),
+                            background: Container(
+                              color: Colors.red,
+                              alignment: Alignment.centerRight,
+                              padding: const EdgeInsets.only(right: 20.0),
+                              child: const Icon(
+                                Icons.delete,
+                                color: Colors.white,
+                                size: 36,
+                              ),
+                            ),
+                            direction: DismissDirection.endToStart,
+                            confirmDismiss: (direction) => _confirmDelete(context, player),
+                            onDismissed: (direction) {
+                              _deletePlayer(player.id);
                             },
+                            child: PlayerCard(
+                              player: player,
+                              onTap: () => _showEditPlayerBottomSheet(player),
+                            ),
                           );
                         },
                       ),
@@ -102,9 +227,16 @@ class _PlayerListScreenState extends State<PlayerListScreen> {
         ],
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          // TODO: Navigate to add player screen
-          print('Add new player');
+        onPressed: () async {
+          final result = await Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const AddPlayerScreen()),
+          );
+          
+          // Reload players if new player was added
+          if (result == true) {
+            _loadPlayers();
+          }
         },
         backgroundColor: const Color(0xFF004E89),
         child: const Icon(Icons.add, color: Color(0xFFEFEFD0)),
