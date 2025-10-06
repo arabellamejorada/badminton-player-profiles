@@ -43,3 +43,8 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Flutter SDK downloads (should not be committed)
+flutter.zip
+flutter_*.zip
+*.zip
