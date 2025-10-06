@@ -8,9 +8,9 @@ import 'badminton_level_selector.dart';
 
 class EditPlayerBottomSheet extends StatefulWidget {
   final String playerId;
-  
+
   const EditPlayerBottomSheet({
-    super.key, 
+    super.key,
     required this.playerId,
   });
 
@@ -29,7 +29,7 @@ class EditPlayerBottomSheet extends StatefulWidget {
 
 class _EditPlayerBottomSheetState extends State<EditPlayerBottomSheet> {
   final _formKey = GlobalKey<FormState>();
-  
+
   // Form controllers
   final _nicknameController = TextEditingController();
   final _fullNameController = TextEditingController();
@@ -37,20 +37,20 @@ class _EditPlayerBottomSheetState extends State<EditPlayerBottomSheet> {
   final _emailController = TextEditingController();
   final _addressController = TextEditingController();
   final _remarksController = TextEditingController();
-  
+
   // Selected values
   String _selectedGender = AppConstants.genderOptions[0];
   String _selectedLevel = AppConstants.badmintonLevels[0];
   String _selectedStrength = AppConstants.strengthLevels[1]; // Default to Mid
-  
+
   bool _isLoading = true;
-  
+
   @override
   void initState() {
     super.initState();
     _loadPlayerData();
   }
-  
+
   Future<void> _loadPlayerData() async {
     try {
       final player = await PlayerService.getPlayerById(widget.playerId);
@@ -63,9 +63,9 @@ class _EditPlayerBottomSheetState extends State<EditPlayerBottomSheet> {
           _emailController.text = player.email ?? '';
           _addressController.text = player.address ?? '';
           _remarksController.text = player.remarks ?? '';
-          
+
           _selectedGender = player.gender;
-          
+
           if (player.badmintonLevel != null) {
             _selectedLevel = player.badmintonLevel!.level;
             _selectedStrength = player.badmintonLevel!.strength;
@@ -73,7 +73,7 @@ class _EditPlayerBottomSheetState extends State<EditPlayerBottomSheet> {
             _selectedLevel = player.skillLevel;
             _selectedStrength = player.skillLevelStrength ?? 'Mid';
           }
-          
+
           _isLoading = false;
         });
       } else {
@@ -83,14 +83,14 @@ class _EditPlayerBottomSheetState extends State<EditPlayerBottomSheet> {
       _showErrorAndNavigateBack('Error loading player: $e');
     }
   }
-  
+
   void _showErrorAndNavigateBack(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message)),
     );
     Navigator.pop(context);
   }
-  
+
   @override
   void dispose() {
     _nicknameController.dispose();
@@ -107,13 +107,13 @@ class _EditPlayerBottomSheetState extends State<EditPlayerBottomSheet> {
       setState(() {
         _isLoading = true;
       });
-      
+
       try {
         final badmintonLevel = BadmintonLevel(
           level: _selectedLevel,
           strength: _selectedStrength,
         );
-        
+
         // Create updated player
         final updatedPlayer = Player(
           id: widget.playerId,
@@ -128,10 +128,10 @@ class _EditPlayerBottomSheetState extends State<EditPlayerBottomSheet> {
           remarks: _remarksController.text,
           badmintonLevel: badmintonLevel,
         );
-        
+
         // Update player using service
         await PlayerService.updatePlayer(updatedPlayer);
-        
+
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Player updated successfully!')),
@@ -153,13 +153,13 @@ class _EditPlayerBottomSheetState extends State<EditPlayerBottomSheet> {
       }
     }
   }
-  
+
   @override
   Widget build(BuildContext context) {
     // Calculate the height of the bottom sheet (80% of the screen height)
     final bottomSheetHeight = MediaQuery.of(context).size.height * 0.9;
     final bottomPadding = MediaQuery.of(context).viewInsets.bottom;
-    
+
     return Container(
       height: bottomSheetHeight + bottomPadding,
       decoration: const BoxDecoration(
@@ -204,10 +204,11 @@ class _EditPlayerBottomSheetState extends State<EditPlayerBottomSheet> {
                           ),
                         ),
                       ),
-                      
+
                       // App Bar with Title
                       Container(
-                        padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 16.0),
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 16.0, horizontal: 16.0),
                         child: Row(
                           children: [
                             const Expanded(
@@ -221,7 +222,8 @@ class _EditPlayerBottomSheetState extends State<EditPlayerBottomSheet> {
                               ),
                             ),
                             IconButton(
-                              icon: const Icon(Icons.close, color: Color(0xFFEFEFD0)),
+                              icon: const Icon(Icons.close,
+                                  color: Color(0xFFEFEFD0)),
                               onPressed: () => Navigator.pop(context),
                             ),
                           ],
@@ -230,7 +232,7 @@ class _EditPlayerBottomSheetState extends State<EditPlayerBottomSheet> {
                     ],
                   ),
                 ),
-                
+
                 // Form content with scrolling
                 Expanded(
                   child: SingleChildScrollView(
@@ -245,21 +247,25 @@ class _EditPlayerBottomSheetState extends State<EditPlayerBottomSheet> {
                           _buildTextFormField(
                             controller: _nicknameController,
                             labelText: 'Nickname',
-                            validator: (value) => FormValidator.validateRequired(value, 'nickname'),
+                            validator: (value) =>
+                                FormValidator.validateRequired(
+                                    value, 'nickname'),
                           ),
                           const SizedBox(height: 16),
                           _buildTextFormField(
                             controller: _fullNameController,
                             labelText: 'Full Name',
-                            validator: (value) => FormValidator.validateRequired(value, 'full name'),
+                            validator: (value) =>
+                                FormValidator.validateRequired(
+                                    value, 'full name'),
                           ),
                           const SizedBox(height: 16),
-                          
+
                           // Gender Selection
                           _buildSectionTitle('Gender'),
                           _buildGenderSelection(),
                           const SizedBox(height: 24),
-                          
+
                           // Contact Information Section
                           _buildSectionTitle('Contact Information'),
                           _buildTextFormField(
@@ -285,7 +291,7 @@ class _EditPlayerBottomSheetState extends State<EditPlayerBottomSheet> {
                             maxLines: 3,
                           ),
                           const SizedBox(height: 24),
-                          
+
                           // Badminton Level Section
                           _buildSectionTitle('Badminton Level'),
                           BadmintonLevelSelector(
@@ -303,17 +309,18 @@ class _EditPlayerBottomSheetState extends State<EditPlayerBottomSheet> {
                             },
                           ),
                           const SizedBox(height: 24),
-                          
+
                           // Remarks Section
                           _buildSectionTitle('Additional Information'),
                           _buildTextFormField(
                             controller: _remarksController,
                             labelText: 'Remarks',
                             maxLines: 4,
-                            hintText: 'Enter any additional notes or remarks about the player',
+                            hintText:
+                                'Enter any additional notes or remarks about the player',
                           ),
                           const SizedBox(height: 32),
-                          
+
                           // Action Buttons
                           _buildActionButtons(),
                           // Extra space at bottom for keyboard
@@ -374,17 +381,21 @@ class _EditPlayerBottomSheetState extends State<EditPlayerBottomSheet> {
       children: AppConstants.genderOptions.map((gender) {
         final String displayText = gender == 'male' ? 'Male' : 'Female';
         return Expanded(
-          child: RadioListTile<String>(
-            title: Text(displayText),
-            value: gender,
-            groupValue: _selectedGender,
-            onChanged: (value) {
-              if (value != null) {
-                setState(() {
-                  _selectedGender = value;
-                });
-              }
-            },
+          child: Row(
+            children: [
+              Radio<String>(
+                value: gender,
+                groupValue: _selectedGender,
+                onChanged: (value) {
+                  if (value != null) {
+                    setState(() {
+                      _selectedGender = value;
+                    });
+                  }
+                },
+              ),
+              Text(displayText),
+            ],
           ),
         );
       }).toList(),
@@ -393,24 +404,27 @@ class _EditPlayerBottomSheetState extends State<EditPlayerBottomSheet> {
 
   Future<bool> _confirmDelete() async {
     return await showDialog<bool>(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Delete Player'),
-          content: const Text('Are you sure you want to delete this player? This action cannot be undone.'),
-          actions: <Widget>[
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              child: const Text('Delete', style: TextStyle(color: Colors.red)),
-            ),
-          ],
-        );
-      },
-    ) ?? false;
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: const Text('Delete Player'),
+              content: const Text(
+                  'Are you sure you want to delete this player? This action cannot be undone.'),
+              actions: <Widget>[
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(false),
+                  child: const Text('Cancel'),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(true),
+                  child:
+                      const Text('Delete', style: TextStyle(color: Colors.red)),
+                ),
+              ],
+            );
+          },
+        ) ??
+        false;
   }
 
   Future<void> _deletePlayer() async {
@@ -419,16 +433,17 @@ class _EditPlayerBottomSheetState extends State<EditPlayerBottomSheet> {
       setState(() {
         _isLoading = true;
       });
-      
+
       try {
         final success = await PlayerService.deletePlayer(widget.playerId);
-        
+
         if (mounted) {
           if (success) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('Player deleted successfully')),
             );
-            Navigator.pop(context, true); // Return true to indicate success and refresh list
+            Navigator.pop(context,
+                true); // Return true to indicate success and refresh list
           } else {
             setState(() {
               _isLoading = false;
@@ -450,7 +465,7 @@ class _EditPlayerBottomSheetState extends State<EditPlayerBottomSheet> {
       }
     }
   }
-  
+
   Widget _buildActionButtons() {
     return Column(
       children: [
@@ -484,7 +499,7 @@ class _EditPlayerBottomSheetState extends State<EditPlayerBottomSheet> {
             ),
           ],
         ),
-        
+
         // Delete button
         const SizedBox(height: 16),
         SizedBox(

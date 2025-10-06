@@ -34,11 +34,12 @@ class _PlayerListScreenState extends State<PlayerListScreen> {
   }
 
   Future<void> _loadPlayers() async {
+    // fetches all players from playerservice
     try {
       setState(() {
         isLoading = true;
       });
-      
+
       final loadedPlayers = await PlayerService.getPlayers();
       setState(() {
         players = loadedPlayers;
@@ -59,6 +60,7 @@ class _PlayerListScreenState extends State<PlayerListScreen> {
   }
 
   void _onSearchChanged(String query) {
+    // searches both nickname and full name
     if (_debounce?.isActive ?? false) _debounce!.cancel();
     _debounce = Timer(const Duration(milliseconds: 500), () async {
       try {
@@ -77,41 +79,46 @@ class _PlayerListScreenState extends State<PlayerListScreen> {
   }
 
   Future<bool> _confirmDelete(BuildContext context, Player player) async {
+    // confirmation dialog
     return await showDialog<bool>(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Confirm Deletion'),
-          content: Text('Are you sure you want to delete ${player.nickname}?'),
-          actions: <Widget>[
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              child: const Text('Delete', style: TextStyle(color: Colors.red)),
-            ),
-          ],
-        );
-      },
-    ) ?? false;
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: const Text('Confirm Deletion'),
+              content:
+                  Text('Are you sure you want to delete ${player.nickname}?'),
+              actions: <Widget>[
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(false),
+                  child: const Text('Cancel'),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(true),
+                  child:
+                      const Text('Delete', style: TextStyle(color: Colors.red)),
+                ),
+              ],
+            );
+          },
+        ) ??
+        false;
   }
 
   Future<void> _deletePlayer(String playerId) async {
+    // actual deletion
     try {
       setState(() {
         isLoading = true;
       });
-      
+
       final success = await PlayerService.deletePlayer(playerId);
-      
+
       if (mounted) {
         if (success) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Player deleted successfully')),
           );
-          _loadPlayers();
+          _loadPlayers(); // refreshes the list
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Failed to delete player')),
@@ -135,9 +142,10 @@ class _PlayerListScreenState extends State<PlayerListScreen> {
 
   Future<void> _showEditPlayerBottomSheet(Player player) async {
     final result = await EditPlayerBottomSheet.show(context, player.id);
-    
+
     if (result == true) {
-      _loadPlayers();
+      // if edit is successful
+      _loadPlayers(); // refresh the list to show changes
     }
   }
 
@@ -172,19 +180,19 @@ class _PlayerListScreenState extends State<PlayerListScreen> {
                   color: Color(0xFFEFEFD0),
                 ),
                 suffixIcon: _searchController.text.isNotEmpty
-                  ? IconButton(
-                      icon: const Icon(Icons.clear, color: Color(0xFFEFEFD0)),
-                      onPressed: () {
-                        _searchController.clear();
-                        _onSearchChanged('');
-                      },
-                    )
-                  : null,
+                    ? IconButton(
+                        icon: const Icon(Icons.clear, color: Color(0xFFEFEFD0)),
+                        onPressed: () {
+                          _searchController.clear();
+                          _onSearchChanged('');
+                        },
+                      )
+                    : null,
               ),
               style: const TextStyle(color: Color(0xFFEFEFD0)),
             ),
           ),
-          
+
           // Player List
           Expanded(
             child: isLoading
@@ -212,7 +220,8 @@ class _PlayerListScreenState extends State<PlayerListScreen> {
                               ),
                             ),
                             direction: DismissDirection.endToStart,
-                            confirmDismiss: (direction) => _confirmDelete(context, player),
+                            confirmDismiss: (direction) =>
+                                _confirmDelete(context, player),
                             onDismissed: (direction) {
                               _deletePlayer(player.id);
                             },
@@ -232,7 +241,7 @@ class _PlayerListScreenState extends State<PlayerListScreen> {
             context,
             MaterialPageRoute(builder: (context) => const AddPlayerScreen()),
           );
-          
+
           // Reload players if new player was added
           if (result == true) {
             _loadPlayers();

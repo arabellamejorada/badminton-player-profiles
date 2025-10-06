@@ -15,22 +15,22 @@ class AddPlayerScreen extends StatefulWidget {
 
 class _AddPlayerScreenState extends State<AddPlayerScreen> {
   final _formKey = GlobalKey<FormState>();
-  
-  // Form controllers
+
+  // Form controllers - manage text input fields
   final _nicknameController = TextEditingController();
   final _fullNameController = TextEditingController();
   final _contactNumberController = TextEditingController();
   final _emailController = TextEditingController();
   final _addressController = TextEditingController();
   final _remarksController = TextEditingController();
-  
+
   // Selected values
   String _selectedGender = AppConstants.genderOptions[0];
   String _selectedLevel = AppConstants.badmintonLevels[0];
   String _selectedStrength = AppConstants.strengthLevels[1]; // Default to Mid
-  
+
   bool _isLoading = false;
-  
+
   @override
   void dispose() {
     _nicknameController.dispose();
@@ -44,16 +44,19 @@ class _AddPlayerScreenState extends State<AddPlayerScreen> {
 
   Future<void> _savePlayer() async {
     if (_formKey.currentState!.validate()) {
+      // validate form first
       setState(() {
-        _isLoading = true;
+        _isLoading = true; // shows loading spinner
       });
-      
+
       try {
+        // creates badmintonlevel object
         final badmintonLevel = BadmintonLevel(
           level: _selectedLevel,
           strength: _selectedStrength,
         );
-        
+
+        // creates new player object with all form data
         final newPlayer = Player(
           id: PlayerService.generateId(),
           nickname: _nicknameController.text,
@@ -67,22 +70,27 @@ class _AddPlayerScreenState extends State<AddPlayerScreen> {
           remarks: _remarksController.text,
           badmintonLevel: badmintonLevel,
         );
-        
+
+        // save to service
         await PlayerService.addPlayer(newPlayer);
-        
+
+        // success feedback, then navigates back to player list
         if (mounted) {
+          // check if widget is still in the tree
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Player added successfully!')),
           );
           Navigator.pop(context, true); // Return true to indicate success
         }
       } catch (e) {
+        // error handling
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Error adding player: $e')),
           );
         }
       } finally {
+        // always turn off loading spinner
         if (mounted) {
           setState(() {
             _isLoading = false;
@@ -91,7 +99,7 @@ class _AddPlayerScreenState extends State<AddPlayerScreen> {
       }
     }
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -100,95 +108,98 @@ class _AddPlayerScreenState extends State<AddPlayerScreen> {
         backgroundColor: const Color(0xFF004E89),
         foregroundColor: const Color(0xFFEFEFD0),
       ),
-      body: _isLoading 
-        ? const Center(child: CircularProgressIndicator())
-        : SingleChildScrollView(
-            padding: const EdgeInsets.all(16.0),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Basic Info Section
-                  _buildSectionTitle('Basic Information'),
-                  _buildTextFormField(
-                    controller: _nicknameController,
-                    labelText: 'Nickname',
-                    validator: (value) => FormValidator.validateRequired(value, 'nickname'),
-                  ),
-                  const SizedBox(height: 16),
-                  _buildTextFormField(
-                    controller: _fullNameController,
-                    labelText: 'Full Name',
-                    validator: (value) => FormValidator.validateRequired(value, 'full name'),
-                  ),
-                  const SizedBox(height: 16),
-                  
-                  // Gender Selection
-                  _buildSectionTitle('Gender'),
-                  _buildGenderSelection(),
-                  const SizedBox(height: 24),
-                  
-                  // Contact Information Section
-                  _buildSectionTitle('Contact Information'),
-                  _buildTextFormField(
-                    controller: _contactNumberController,
-                    labelText: 'Contact Number',
-                    keyboardType: TextInputType.phone,
-                    inputFormatters: [
-                      FilteringTextInputFormatter.digitsOnly,
-                    ],
-                    validator: FormValidator.validatePhoneNumber,
-                  ),
-                  const SizedBox(height: 16),
-                  _buildTextFormField(
-                    controller: _emailController,
-                    labelText: 'Email',
-                    keyboardType: TextInputType.emailAddress,
-                    validator: FormValidator.validateEmail,
-                  ),
-                  const SizedBox(height: 16),
-                  _buildTextFormField(
-                    controller: _addressController,
-                    labelText: 'Address',
-                    maxLines: 3,
-                  ),
-                  const SizedBox(height: 24),
-                  
-                  // Badminton Level Section
-                  _buildSectionTitle('Badminton Level'),
-                  BadmintonLevelSelector(
-                    initialLevel: _selectedLevel,
-                    initialStrength: _selectedStrength,
-                    onLevelChanged: (level) {
-                      setState(() {
-                        _selectedLevel = level;
-                      });
-                    },
-                    onStrengthChanged: (strength) {
-                      setState(() {
-                        _selectedStrength = strength;
-                      });
-                    },
-                  ),
-                  const SizedBox(height: 24),
-                  
-                  // Remarks Section
-                  _buildSectionTitle('Additional Information'),
-                  _buildTextFormField(
-                    controller: _remarksController,
-                    labelText: 'Remarks',
-                    maxLines: 4,
-                    hintText: 'Enter any additional notes or remarks about the player',
-                  ),
-                  const SizedBox(height: 32),
-                  
-                  // Action Buttons
-                  _buildActionButtons(),
-                ],
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
+              padding: const EdgeInsets.all(16.0),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Basic Info Section
+                    _buildSectionTitle('Basic Information'),
+                    _buildTextFormField(
+                      controller: _nicknameController,
+                      labelText: 'Nickname',
+                      validator: (value) =>
+                          FormValidator.validateRequired(value, 'nickname'),
+                    ),
+                    const SizedBox(height: 16),
+                    _buildTextFormField(
+                      controller: _fullNameController,
+                      labelText: 'Full Name',
+                      validator: (value) =>
+                          FormValidator.validateRequired(value, 'full name'),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Gender Selection
+                    _buildSectionTitle('Gender'),
+                    _buildGenderSelection(),
+                    const SizedBox(height: 24),
+
+                    // Contact Information Section
+                    _buildSectionTitle('Contact Information'),
+                    _buildTextFormField(
+                      controller: _contactNumberController,
+                      labelText: 'Contact Number',
+                      keyboardType: TextInputType.phone,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                      ],
+                      validator: FormValidator.validatePhoneNumber,
+                    ),
+                    const SizedBox(height: 16),
+                    _buildTextFormField(
+                      controller: _emailController,
+                      labelText: 'Email',
+                      keyboardType: TextInputType.emailAddress,
+                      validator: FormValidator.validateEmail,
+                    ),
+                    const SizedBox(height: 16),
+                    _buildTextFormField(
+                      controller: _addressController,
+                      labelText: 'Address',
+                      maxLines: 3,
+                    ),
+                    const SizedBox(height: 24),
+
+                    // Badminton Level Section
+                    _buildSectionTitle('Badminton Level'),
+                    BadmintonLevelSelector(
+                      initialLevel: _selectedLevel,
+                      initialStrength: _selectedStrength,
+                      onLevelChanged: (level) {
+                        setState(() {
+                          _selectedLevel = level;
+                        });
+                      },
+                      onStrengthChanged: (strength) {
+                        setState(() {
+                          _selectedStrength = strength;
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 24),
+
+                    // Remarks Section
+                    _buildSectionTitle('Additional Information'),
+                    _buildTextFormField(
+                      controller: _remarksController,
+                      labelText: 'Remarks',
+                      maxLines: 4,
+                      hintText:
+                          'Enter any additional notes or remarks about the player',
+                    ),
+                    const SizedBox(height: 32),
+
+                    // Action Buttons
+                    _buildActionButtons(),
+                  ],
+                ),
               ),
             ),
-          ),
     );
   }
 
@@ -238,24 +249,26 @@ class _AddPlayerScreenState extends State<AddPlayerScreen> {
       children: AppConstants.genderOptions.map((gender) {
         final String displayText = gender == 'male' ? 'Male' : 'Female';
         return Expanded(
-          child: RadioListTile<String>(
-            title: Text(displayText),
-            value: gender,
-            groupValue: _selectedGender,
-            onChanged: (value) {
-              if (value != null) {
-                setState(() {
-                  _selectedGender = value;
-                });
-              }
-            },
+          child: Row(
+            children: [
+              Radio<String>(
+                value: gender,
+                groupValue: _selectedGender,
+                onChanged: (value) {
+                  if (value != null) {
+                    setState(() {
+                      _selectedGender = value;
+                    });
+                  }
+                },
+              ),
+              Text(displayText),
+            ],
           ),
         );
       }).toList(),
     );
   }
-
-
 
   Widget _buildActionButtons() {
     return Row(
