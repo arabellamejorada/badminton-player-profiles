@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'screens/player_list_screen.dart';
+import 'main_scaffold.dart';
 import 'screens/add_player_screen.dart';
+import 'screens/add_game_screen.dart';
 
 void main() {
   runApp(const BadmintonPlayerProfilesApp());
@@ -42,14 +43,13 @@ class BadmintonPlayerProfilesApp extends StatelessWidget {
           ),
         ),
       ),
-      home: const PlayerListScreen(),
+      home: const MainScaffold(),
       routes: {
         '/add_player': (context) => const AddPlayerScreen(),
+        '/add_game': (context) => const AddGameScreen(),
         // We can't add the edit screen route here since it requires a playerId parameter
       },
       debugShowCheckedModeBanner: false,
     );
   }
 }
-
-
