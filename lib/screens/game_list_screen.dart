@@ -208,81 +208,49 @@ class _GameListScreenState extends State<GameListScreen> {
                 ? const Center(
                     child: CircularProgressIndicator(),
                   )
-                : filteredGames.isEmpty
-                    ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.sports_tennis,
-                              size: 64,
-                              color: Colors.grey[400],
-                            ),
-                            const SizedBox(height: 16),
-                            Text(
-                              _searchController.text.isEmpty
-                                  ? 'No games scheduled yet'
-                                  : 'No games found',
-                              style: TextStyle(
-                                fontSize: 18,
-                                color: Colors.grey[600],
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            if (_searchController.text.isEmpty)
-                              Text(
-                                'Tap the + button to add a new game',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.grey[500],
+                : RefreshIndicator(
+                    onRefresh: _loadGames,
+                    child: ListView.builder(
+                      itemCount: filteredGames.length,
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      itemBuilder: (context, index) {
+                        final game = filteredGames[index];
+                        return Dismissible(
+                          key: Key(game.id),
+                          background: Container(
+                            color: Colors.red,
+                            alignment: Alignment.centerRight,
+                            padding: const EdgeInsets.only(right: 20),
+                            child: const Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.delete,
+                                    color: Colors.white, size: 32),
+                                SizedBox(height: 4),
+                                Text(
+                                  'Delete',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
-                              ),
-                          ],
-                        ),
-                      )
-                    : RefreshIndicator(
-                        onRefresh: _loadGames,
-                        child: ListView.builder(
-                          itemCount: filteredGames.length,
-                          padding: const EdgeInsets.symmetric(vertical: 8),
-                          itemBuilder: (context, index) {
-                            final game = filteredGames[index];
-                            return Dismissible(
-                              key: Key(game.id),
-                              background: Container(
-                                color: Colors.red,
-                                alignment: Alignment.centerRight,
-                                padding: const EdgeInsets.only(right: 20),
-                                child: const Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(Icons.delete,
-                                        color: Colors.white, size: 32),
-                                    SizedBox(height: 4),
-                                    Text(
-                                      'Delete',
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              direction: DismissDirection.endToStart,
-                              confirmDismiss: (direction) =>
-                                  _confirmDelete(context, game),
-                              onDismissed: (direction) {
-                                _deleteGame(game.id);
-                              },
-                              child: GameCard(
-                                game: game,
-                                onTap: () => _openGameDetails(game),
-                              ),
-                            );
+                              ],
+                            ),
+                          ),
+                          direction: DismissDirection.endToStart,
+                          confirmDismiss: (direction) =>
+                              _confirmDelete(context, game),
+                          onDismissed: (direction) {
+                            _deleteGame(game.id);
                           },
-                        ),
-                      ),
+                          child: GameCard(
+                            game: game,
+                            onTap: () => _openGameDetails(game),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
           ),
         ],
       ),

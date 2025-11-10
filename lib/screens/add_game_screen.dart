@@ -251,33 +251,11 @@ class _AddGameScreenState extends State<AddGameScreen> {
                     ),
                     const SizedBox(height: 12),
 
-                    if (_schedules.isEmpty)
-                      Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: Colors.grey[100],
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: Colors.grey[300]!),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(Icons.info_outline, color: Colors.grey[600]),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Text(
-                                'No schedules added yet. Click "Add Schedule" to add court booking times.',
-                                style: TextStyle(color: Colors.grey[600]),
-                              ),
-                            ),
-                          ],
-                        ),
-                      )
-                    else
-                      ..._schedules.asMap().entries.map((entry) {
-                        final index = entry.key;
-                        final schedule = entry.value;
-                        return _buildScheduleCard(schedule, index);
-                      }).toList(),
+                    ..._schedules.asMap().entries.map((entry) {
+                      final index = entry.key;
+                      final schedule = entry.value;
+                      return _buildScheduleCard(schedule, index);
+                    }).toList(),
 
                     const SizedBox(height: 24),
 
