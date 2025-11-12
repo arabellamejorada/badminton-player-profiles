@@ -16,7 +16,6 @@ class PlayerListScreen extends StatefulWidget {
 class _PlayerListScreenState extends State<PlayerListScreen> {
   List<Player> players = [];
   List<Player> filteredPlayers = [];
-  bool isLoading = true;
   final TextEditingController _searchController = TextEditingController();
   Timer? _debounce;
 
@@ -36,20 +35,12 @@ class _PlayerListScreenState extends State<PlayerListScreen> {
   Future<void> _loadPlayers() async {
     // fetches all players from playerservice
     try {
-      setState(() {
-        isLoading = true;
-      });
-
       final loadedPlayers = await PlayerService.getPlayers();
       setState(() {
         players = loadedPlayers;
         filteredPlayers = loadedPlayers;
-        isLoading = false;
       });
     } catch (e) {
-      setState(() {
-        isLoading = false;
-      });
       // Handle error
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -107,10 +98,6 @@ class _PlayerListScreenState extends State<PlayerListScreen> {
   Future<void> _deletePlayer(String playerId) async {
     // actual deletion
     try {
-      setState(() {
-        isLoading = true;
-      });
-
       final success = await PlayerService.deletePlayer(playerId);
 
       if (mounted) {
@@ -123,15 +110,9 @@ class _PlayerListScreenState extends State<PlayerListScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Failed to delete player')),
           );
-          setState(() {
-            isLoading = false;
-          });
         }
       }
     } catch (e) {
-      setState(() {
-        isLoading = false;
-      });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error deleting player: $e')),
@@ -195,43 +176,39 @@ class _PlayerListScreenState extends State<PlayerListScreen> {
 
           // Player List
           Expanded(
-            child: isLoading
+            child: filteredPlayers.isEmpty
                 ? const Center(
-                    child: CircularProgressIndicator(),
+                    child: Text('No players found'),
                   )
-                : filteredPlayers.isEmpty
-                    ? const Center(
-                        child: Text('No players found'),
-                      )
-                    : ListView.builder(
-                        itemCount: filteredPlayers.length,
-                        itemBuilder: (context, index) {
-                          final player = filteredPlayers[index];
-                          return Dismissible(
-                            key: Key(player.id),
-                            background: Container(
-                              color: Colors.red,
-                              alignment: Alignment.centerRight,
-                              padding: const EdgeInsets.only(right: 20.0),
-                              child: const Icon(
-                                Icons.delete,
-                                color: Colors.white,
-                                size: 36,
-                              ),
-                            ),
-                            direction: DismissDirection.endToStart,
-                            confirmDismiss: (direction) =>
-                                _confirmDelete(context, player),
-                            onDismissed: (direction) {
-                              _deletePlayer(player.id);
-                            },
-                            child: PlayerCard(
-                              player: player,
-                              onTap: () => _showEditPlayerBottomSheet(player),
-                            ),
-                          );
+                : ListView.builder(
+                    itemCount: filteredPlayers.length,
+                    itemBuilder: (context, index) {
+                      final player = filteredPlayers[index];
+                      return Dismissible(
+                        key: Key(player.id),
+                        background: Container(
+                          color: Colors.red,
+                          alignment: Alignment.centerRight,
+                          padding: const EdgeInsets.only(right: 20.0),
+                          child: const Icon(
+                            Icons.delete,
+                            color: Colors.white,
+                            size: 36,
+                          ),
+                        ),
+                        direction: DismissDirection.endToStart,
+                        confirmDismiss: (direction) =>
+                            _confirmDelete(context, player),
+                        onDismissed: (direction) {
+                          _deletePlayer(player.id);
                         },
-                      ),
+                        child: PlayerCard(
+                          player: player,
+                          onTap: () => _showEditPlayerBottomSheet(player),
+                        ),
+                      );
+                    },
+                  ),
           ),
         ],
       ),

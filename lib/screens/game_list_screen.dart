@@ -3,6 +3,7 @@ import 'dart:async';
 import '../models/game.dart';
 import '../services/game_service.dart';
 import '../widgets/game_card.dart';
+import '../widgets/view_game_bottom_sheet.dart';
 import 'add_game_screen.dart';
 
 class GameListScreen extends StatefulWidget {
@@ -15,7 +16,6 @@ class GameListScreen extends StatefulWidget {
 class _GameListScreenState extends State<GameListScreen> {
   List<Game> games = [];
   List<Game> filteredGames = [];
-  bool isLoading = true;
   final TextEditingController _searchController = TextEditingController();
   Timer? _debounce;
 
@@ -34,20 +34,12 @@ class _GameListScreenState extends State<GameListScreen> {
 
   Future<void> _loadGames() async {
     try {
-      setState(() {
-        isLoading = true;
-      });
-
       final loadedGames = await GameService.getGamesSortedByDate();
       setState(() {
         games = loadedGames;
         filteredGames = loadedGames;
-        isLoading = false;
       });
     } catch (e) {
-      setState(() {
-        isLoading = false;
-      });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error loading games: $e')),
@@ -101,10 +93,6 @@ class _GameListScreenState extends State<GameListScreen> {
 
   Future<void> _deleteGame(String gameId) async {
     try {
-      setState(() {
-        isLoading = true;
-      });
-
       final success = await GameService.deleteGame(gameId);
 
       if (mounted) {
@@ -123,15 +111,9 @@ class _GameListScreenState extends State<GameListScreen> {
               backgroundColor: Colors.red,
             ),
           );
-          setState(() {
-            isLoading = false;
-          });
         }
       }
     } catch (e) {
-      setState(() {
-        isLoading = false;
-      });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error deleting game: $e')),
@@ -152,9 +134,14 @@ class _GameListScreenState extends State<GameListScreen> {
   }
 
   void _openGameDetails(Game game) {
-    // TODO: Navigate to View Game screen when implemented
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('View game: ${game.displayTitle}')),
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => ViewGameBottomSheet(
+        game: game,
+        onGameUpdated: _loadGames,
+      ),
     );
   }
 
@@ -204,53 +191,48 @@ class _GameListScreenState extends State<GameListScreen> {
 
           // Game List
           Expanded(
-            child: isLoading
-                ? const Center(
-                    child: CircularProgressIndicator(),
-                  )
-                : RefreshIndicator(
-                    onRefresh: _loadGames,
-                    child: ListView.builder(
-                      itemCount: filteredGames.length,
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                      itemBuilder: (context, index) {
-                        final game = filteredGames[index];
-                        return Dismissible(
-                          key: Key(game.id),
-                          background: Container(
-                            color: Colors.red,
-                            alignment: Alignment.centerRight,
-                            padding: const EdgeInsets.only(right: 20),
-                            child: const Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.delete,
-                                    color: Colors.white, size: 32),
-                                SizedBox(height: 4),
-                                Text(
-                                  'Delete',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
+            child: RefreshIndicator(
+              onRefresh: _loadGames,
+              child: ListView.builder(
+                itemCount: filteredGames.length,
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                itemBuilder: (context, index) {
+                  final game = filteredGames[index];
+                  return Dismissible(
+                    key: Key(game.id),
+                    background: Container(
+                      color: Colors.red,
+                      alignment: Alignment.centerRight,
+                      padding: const EdgeInsets.only(right: 20),
+                      child: const Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.delete, color: Colors.white, size: 32),
+                          SizedBox(height: 4),
+                          Text(
+                            'Delete',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
-                          direction: DismissDirection.endToStart,
-                          confirmDismiss: (direction) =>
-                              _confirmDelete(context, game),
-                          onDismissed: (direction) {
-                            _deleteGame(game.id);
-                          },
-                          child: GameCard(
-                            game: game,
-                            onTap: () => _openGameDetails(game),
-                          ),
-                        );
-                      },
+                        ],
+                      ),
                     ),
-                  ),
+                    direction: DismissDirection.endToStart,
+                    confirmDismiss: (direction) =>
+                        _confirmDelete(context, game),
+                    onDismissed: (direction) {
+                      _deleteGame(game.id);
+                    },
+                    child: GameCard(
+                      game: game,
+                      onTap: () => _openGameDetails(game),
+                    ),
+                  );
+                },
+              ),
+            ),
           ),
         ],
       ),

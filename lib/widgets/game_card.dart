@@ -87,20 +87,30 @@ class GameCard extends StatelessWidget {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: Colors.green[100],
+                      color: game.playerIds.length >= 4
+                          ? Colors.green[100]
+                          : Colors.orange[100],
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.people, size: 14, color: Colors.green[900]),
+                        Icon(
+                          Icons.people,
+                          size: 14,
+                          color: game.playerIds.length >= 4
+                              ? Colors.green[900]
+                              : Colors.orange[900],
+                        ),
                         const SizedBox(width: 4),
                         Text(
-                          '0/4', // TODO: Get actual player count when player management is implemented
+                          '${game.playerIds.length}/4',
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
-                            color: Colors.green[900],
+                            color: game.playerIds.length >= 4
+                                ? Colors.green[900]
+                                : Colors.orange[900],
                           ),
                         ),
                       ],

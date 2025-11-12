@@ -64,6 +64,7 @@ class Game {
   final double courtRate;
   final double shuttleCockPrice;
   final bool divideCourtEqually;
+  final List<String> playerIds; // List of player IDs (max 4)
   final DateTime createdAt;
 
   Game({
@@ -74,8 +75,10 @@ class Game {
     required this.courtRate,
     required this.shuttleCockPrice,
     required this.divideCourtEqually,
+    List<String>? playerIds,
     DateTime? createdAt,
-  }) : createdAt = createdAt ?? DateTime.now();
+  })  : playerIds = playerIds ?? [],
+        createdAt = createdAt ?? DateTime.now();
 
   // Get display title (use title or format first schedule date)
   String get displayTitle {
@@ -118,6 +121,10 @@ class Game {
     return courtRate * totalHours;
   }
 
+  double get totalCost {
+    return totalCourtCost + shuttleCockPrice;
+  }
+
   double get courtCostPerPlayer {
     if (divideCourtEqually) {
       return totalCourtCost / 4; // Assuming 4 players for doubles
@@ -141,6 +148,7 @@ class Game {
     double? courtRate,
     double? shuttleCockPrice,
     bool? divideCourtEqually,
+    List<String>? playerIds,
     DateTime? createdAt,
   }) {
     return Game(
@@ -151,6 +159,7 @@ class Game {
       courtRate: courtRate ?? this.courtRate,
       shuttleCockPrice: shuttleCockPrice ?? this.shuttleCockPrice,
       divideCourtEqually: divideCourtEqually ?? this.divideCourtEqually,
+      playerIds: playerIds ?? this.playerIds,
       createdAt: createdAt ?? this.createdAt,
     );
   }
@@ -164,6 +173,7 @@ class Game {
       'courtRate': courtRate,
       'shuttleCockPrice': shuttleCockPrice,
       'divideCourtEqually': divideCourtEqually,
+      'playerIds': playerIds,
       'createdAt': createdAt.toIso8601String(),
     };
   }
@@ -179,6 +189,9 @@ class Game {
       courtRate: (json['courtRate'] as num).toDouble(),
       shuttleCockPrice: (json['shuttleCockPrice'] as num).toDouble(),
       divideCourtEqually: json['divideCourtEqually'] as bool,
+      playerIds: json['playerIds'] != null
+          ? List<String>.from(json['playerIds'] as List)
+          : [],
       createdAt: DateTime.parse(json['createdAt'] as String),
     );
   }
