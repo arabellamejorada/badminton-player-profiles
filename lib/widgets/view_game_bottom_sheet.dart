@@ -187,7 +187,9 @@ class ViewGameBottomSheet extends StatelessWidget {
                             size: 16, color: Colors.blue[600]),
                         const SizedBox(width: 4),
                         Text(
-                          'Court rate divided equally among 4 players',
+                          game.playerIds.isNotEmpty
+                              ? 'Court rate divided equally among ${game.playerIds.length} players'
+                              : 'Court rate divided equally among all players',
                           style: TextStyle(
                             fontSize: 12,
                             color: Colors.blue[600],

@@ -25,8 +25,8 @@ class _MainScaffoldState extends State<MainScaffold> {
   }
 
   final List<Widget> _screens = const [
-    PlayerListScreen(),
     GameListScreen(),
+    PlayerListScreen(),
     UserSettingsScreen(),
   ];
 
@@ -50,12 +50,12 @@ class _MainScaffoldState extends State<MainScaffold> {
         ),
         items: const [
           BottomNavigationBarItem(
-            icon: Icon(Icons.people),
-            label: 'Players',
-          ),
-          BottomNavigationBarItem(
             icon: Icon(Icons.sports_tennis),
             label: 'Games',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.people),
+            label: 'Players',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.settings),

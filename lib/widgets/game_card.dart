@@ -87,9 +87,9 @@ class GameCard extends StatelessWidget {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: game.playerIds.length >= 4
-                          ? Colors.green[100]
-                          : Colors.orange[100],
+                      color: game.playerIds.isEmpty
+                          ? Colors.orange[100]
+                          : Colors.green[100],
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Row(
@@ -98,19 +98,19 @@ class GameCard extends StatelessWidget {
                         Icon(
                           Icons.people,
                           size: 14,
-                          color: game.playerIds.length >= 4
-                              ? Colors.green[900]
-                              : Colors.orange[900],
+                          color: game.playerIds.isEmpty
+                              ? Colors.orange[900]
+                              : Colors.green[900],
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          '${game.playerIds.length}/4',
+                          '${game.playerIds.length}',
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
-                            color: game.playerIds.length >= 4
-                                ? Colors.green[900]
-                                : Colors.orange[900],
+                            color: game.playerIds.isEmpty
+                                ? Colors.orange[900]
+                                : Colors.green[900],
                           ),
                         ),
                       ],

@@ -25,8 +25,11 @@ class _EditGameBottomSheetState extends State<EditGameBottomSheet> {
   late TextEditingController _courtRateController;
   late TextEditingController _shuttleCockPriceController;
   late bool _divideCourtEqually;
+  late bool _divideShuttleCockEqually;
   late List<CourtSchedule> _schedules;
   late List<String> _selectedPlayerIds;
+  String? _payingPlayerId;
+  String? _payingShuttleCockPlayerId;
   List<Player> _availablePlayers = [];
   bool _isSaving = false;
 
@@ -40,8 +43,11 @@ class _EditGameBottomSheetState extends State<EditGameBottomSheet> {
     _shuttleCockPriceController =
         TextEditingController(text: widget.game.shuttleCockPrice.toString());
     _divideCourtEqually = widget.game.divideCourtEqually;
+    _divideShuttleCockEqually = widget.game.divideShuttleCockEqually;
     _schedules = List.from(widget.game.schedules);
     _selectedPlayerIds = List.from(widget.game.playerIds);
+    _payingPlayerId = widget.game.payingPlayerId;
+    _payingShuttleCockPlayerId = widget.game.payingShuttleCockPlayerId;
     _loadPlayers();
     _checkExistingOverlaps();
   }
@@ -226,6 +232,11 @@ class _EditGameBottomSheetState extends State<EditGameBottomSheet> {
     if (selectedIds != null) {
       setState(() {
         _selectedPlayerIds = selectedIds;
+        // Reset paying player if they're no longer in the selected players
+        if (_payingPlayerId != null &&
+            !_selectedPlayerIds.contains(_payingPlayerId)) {
+          _payingPlayerId = null;
+        }
       });
     }
   }
@@ -256,7 +267,10 @@ class _EditGameBottomSheetState extends State<EditGameBottomSheet> {
         courtRate: double.parse(_courtRateController.text),
         shuttleCockPrice: double.parse(_shuttleCockPriceController.text),
         divideCourtEqually: _divideCourtEqually,
+        divideShuttleCockEqually: _divideShuttleCockEqually,
         playerIds: _selectedPlayerIds,
+        payingPlayerId: _payingPlayerId,
+        payingShuttleCockPlayerId: _payingShuttleCockPlayerId,
       );
 
       try {
@@ -456,7 +470,7 @@ class _EditGameBottomSheetState extends State<EditGameBottomSheet> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          'Players (${_selectedPlayerIds.length}/4)',
+                          'Players (${_selectedPlayerIds.length})',
                           style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -592,6 +606,85 @@ class _EditGameBottomSheetState extends State<EditGameBottomSheet> {
                     ),
                     const SizedBox(height: 24),
 
+                    // Divide Shuttlecock Equally Checkbox
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.green[50],
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: Colors.green[200]!,
+                          width: 1,
+                        ),
+                      ),
+                      child: CheckboxListTile(
+                        title: const Text(
+                            'Divide shuttlecock price equally among players'),
+                        subtitle: Text(
+                          _divideShuttleCockEqually
+                              ? _selectedPlayerIds.isNotEmpty
+                                  ? 'Shuttlecock price will be divided equally among ${_selectedPlayerIds.length} players'
+                                  : 'Shuttlecock price will be divided equally among all selected players'
+                              : 'Full shuttlecock price will be charged per game',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey[700],
+                          ),
+                        ),
+                        value: _divideShuttleCockEqually,
+                        onChanged: (bool? value) {
+                          setState(() {
+                            _divideShuttleCockEqually = value ?? true;
+                            // Reset paying player when switching back to divide equally
+                            if (_divideShuttleCockEqually) {
+                              _payingShuttleCockPlayerId = null;
+                            }
+                          });
+                        },
+                        activeColor: Theme.of(context).colorScheme.primary,
+                        contentPadding: EdgeInsets.zero,
+                      ),
+                    ),
+
+                    // Paying player selector for shuttlecock (when not dividing equally)
+                    if (!_divideShuttleCockEqually &&
+                        _selectedPlayerIds.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 16),
+                        child: DropdownButtonFormField<String>(
+                          decoration: const InputDecoration(
+                            labelText: 'Who will pay for shuttlecock?',
+                            hintText: 'Select the player who will pay',
+                            border: OutlineInputBorder(),
+                          ),
+                          value: _payingShuttleCockPlayerId,
+                          items: _selectedPlayerIds.map((playerId) {
+                            final player = _availablePlayers.firstWhere(
+                              (p) => p.id == playerId,
+                            );
+                            return DropdownMenuItem<String>(
+                              value: playerId,
+                              child: Text(player.nickname),
+                            );
+                          }).toList(),
+                          onChanged: (String? value) {
+                            setState(() {
+                              _payingShuttleCockPlayerId = value;
+                            });
+                          },
+                          validator: (value) {
+                            if (!_divideShuttleCockEqually &&
+                                _selectedPlayerIds.isNotEmpty &&
+                                value == null) {
+                              return 'Please select who will pay for shuttlecock';
+                            }
+                            return null;
+                          },
+                        ),
+                      ),
+
+                    const SizedBox(height: 24),
+
                     // Divide Court Equally Checkbox
                     Container(
                       padding: const EdgeInsets.all(12),
@@ -608,7 +701,9 @@ class _EditGameBottomSheetState extends State<EditGameBottomSheet> {
                             'Divide the court rate equally among players'),
                         subtitle: Text(
                           _divideCourtEqually
-                              ? 'Court rate will be divided equally among 4 players'
+                              ? _selectedPlayerIds.isNotEmpty
+                                  ? 'Court rate will be divided equally among ${_selectedPlayerIds.length} players'
+                                  : 'Court rate will be divided equally among all selected players'
                               : 'Full court rate will be charged per game',
                           style: TextStyle(
                             fontSize: 12,
@@ -619,12 +714,52 @@ class _EditGameBottomSheetState extends State<EditGameBottomSheet> {
                         onChanged: (bool? value) {
                           setState(() {
                             _divideCourtEqually = value ?? true;
+                            // Reset paying player when switching back to divide equally
+                            if (_divideCourtEqually) {
+                              _payingPlayerId = null;
+                            }
                           });
                         },
                         activeColor: const Color(0xFF004E89),
                         contentPadding: EdgeInsets.zero,
                       ),
                     ),
+
+                    // Paying player selector (when not dividing equally)
+                    if (!_divideCourtEqually && _selectedPlayerIds.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 16),
+                        child: DropdownButtonFormField<String>(
+                          decoration: const InputDecoration(
+                            labelText: 'Who will pay?',
+                            hintText: 'Select the player who will pay',
+                            border: OutlineInputBorder(),
+                          ),
+                          value: _payingPlayerId,
+                          items: _selectedPlayerIds.map((playerId) {
+                            final player = _availablePlayers.firstWhere(
+                              (p) => p.id == playerId,
+                            );
+                            return DropdownMenuItem<String>(
+                              value: playerId,
+                              child: Text(player.nickname),
+                            );
+                          }).toList(),
+                          onChanged: (String? value) {
+                            setState(() {
+                              _payingPlayerId = value;
+                            });
+                          },
+                          validator: (value) {
+                            if (!_divideCourtEqually &&
+                                _selectedPlayerIds.isNotEmpty &&
+                                value == null) {
+                              return 'Please select who will pay';
+                            }
+                            return null;
+                          },
+                        ),
+                      ),
                   ],
                 ),
               ),
@@ -992,7 +1127,7 @@ class _PlayerSelectionDialogState extends State<_PlayerSelectionDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text('Select Players (${_selectedIds.length}/4)'),
+      title: Text('Select Players (${_selectedIds.length})'),
       content: SizedBox(
         width: double.maxFinite,
         child: widget.availablePlayers.isEmpty
@@ -1010,22 +1145,18 @@ class _PlayerSelectionDialogState extends State<_PlayerSelectionDialog> {
                 itemBuilder: (context, index) {
                   final player = widget.availablePlayers[index];
                   final isSelected = _selectedIds.contains(player.id);
-                  final canSelect = _selectedIds.length < 4 || isSelected;
 
                   return CheckboxListTile(
                     value: isSelected,
-                    enabled: canSelect,
-                    onChanged: canSelect
-                        ? (bool? checked) {
-                            setState(() {
-                              if (checked == true) {
-                                _selectedIds.add(player.id);
-                              } else {
-                                _selectedIds.remove(player.id);
-                              }
-                            });
-                          }
-                        : null,
+                    onChanged: (bool? checked) {
+                      setState(() {
+                        if (checked == true) {
+                          _selectedIds.add(player.id);
+                        } else {
+                          _selectedIds.remove(player.id);
+                        }
+                      });
+                    },
                     title: Text(player.nickname),
                     subtitle: Text(player.fullName),
                     secondary: CircleAvatar(

@@ -16,6 +16,7 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
   final _courtRateController = TextEditingController();
   final _shuttleCockPriceController = TextEditingController();
   bool _divideCourtEqually = true;
+  bool _divideShuttleCockEqually = true;
 
   @override
   void initState() {
@@ -30,6 +31,7 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
       _courtRateController.text = settings.courtRate.toString();
       _shuttleCockPriceController.text = settings.shuttleCockPrice.toString();
       _divideCourtEqually = settings.divideCourtEqually;
+      _divideShuttleCockEqually = settings.divideShuttleCockEqually;
     });
   }
 
@@ -48,6 +50,7 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
         courtRate: double.parse(_courtRateController.text),
         shuttleCockPrice: double.parse(_shuttleCockPriceController.text),
         divideCourtEqually: _divideCourtEqually,
+        divideShuttleCockEqually: _divideShuttleCockEqually,
       );
 
       final success = await SettingsService.saveSettings(settings);
@@ -188,7 +191,7 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
                       const Text('Divide the court rate equally among players'),
                   subtitle: Text(
                     _divideCourtEqually
-                        ? 'Court rate will be divided equally among 4 players'
+                        ? 'Court rate will be divided equally among all players'
                         : 'Full court rate will be charged per game',
                     style: TextStyle(
                       fontSize: 12,
@@ -199,6 +202,41 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
                   onChanged: (bool? value) {
                     setState(() {
                       _divideCourtEqually = value ?? true;
+                    });
+                  },
+                  activeColor: Theme.of(context).colorScheme.primary,
+                  contentPadding: EdgeInsets.zero,
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // Divide Shuttlecock Equally Checkbox
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.green[50],
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: Colors.green[200]!,
+                    width: 1,
+                  ),
+                ),
+                child: CheckboxListTile(
+                  title: const Text(
+                      'Divide shuttlecock price equally among players'),
+                  subtitle: Text(
+                    _divideShuttleCockEqually
+                        ? 'Shuttlecock price will be divided equally among all players'
+                        : 'Full shuttlecock price will be charged per game',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey[700],
+                    ),
+                  ),
+                  value: _divideShuttleCockEqually,
+                  onChanged: (bool? value) {
+                    setState(() {
+                      _divideShuttleCockEqually = value ?? true;
                     });
                   },
                   activeColor: Theme.of(context).colorScheme.primary,

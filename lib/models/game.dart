@@ -64,7 +64,12 @@ class Game {
   final double courtRate;
   final double shuttleCockPrice;
   final bool divideCourtEqually;
-  final List<String> playerIds; // List of player IDs (max 4)
+  final bool divideShuttleCockEqually;
+  final List<String> playerIds; // List of player IDs
+  final String?
+      payingPlayerId; // Player who pays court when not dividing equally
+  final String?
+      payingShuttleCockPlayerId; // Player who pays shuttlecock when not dividing equally
   final DateTime createdAt;
 
   Game({
@@ -75,7 +80,10 @@ class Game {
     required this.courtRate,
     required this.shuttleCockPrice,
     required this.divideCourtEqually,
+    this.divideShuttleCockEqually = true,
     List<String>? playerIds,
+    this.payingPlayerId,
+    this.payingShuttleCockPlayerId,
     DateTime? createdAt,
   })  : playerIds = playerIds ?? [],
         createdAt = createdAt ?? DateTime.now();
@@ -126,14 +134,17 @@ class Game {
   }
 
   double get courtCostPerPlayer {
-    if (divideCourtEqually) {
-      return totalCourtCost / 4; // Assuming 4 players for doubles
+    if (divideCourtEqually && playerIds.isNotEmpty) {
+      return totalCourtCost / playerIds.length;
     }
     return totalCourtCost;
   }
 
   double get shuttleCockCostPerPlayer {
-    return shuttleCockPrice / 4;
+    if (divideShuttleCockEqually && playerIds.isNotEmpty) {
+      return shuttleCockPrice / playerIds.length;
+    }
+    return shuttleCockPrice;
   }
 
   double get totalCostPerPlayer {
@@ -148,7 +159,10 @@ class Game {
     double? courtRate,
     double? shuttleCockPrice,
     bool? divideCourtEqually,
+    bool? divideShuttleCockEqually,
     List<String>? playerIds,
+    String? payingPlayerId,
+    String? payingShuttleCockPlayerId,
     DateTime? createdAt,
   }) {
     return Game(
@@ -159,7 +173,12 @@ class Game {
       courtRate: courtRate ?? this.courtRate,
       shuttleCockPrice: shuttleCockPrice ?? this.shuttleCockPrice,
       divideCourtEqually: divideCourtEqually ?? this.divideCourtEqually,
+      divideShuttleCockEqually:
+          divideShuttleCockEqually ?? this.divideShuttleCockEqually,
       playerIds: playerIds ?? this.playerIds,
+      payingPlayerId: payingPlayerId ?? this.payingPlayerId,
+      payingShuttleCockPlayerId:
+          payingShuttleCockPlayerId ?? this.payingShuttleCockPlayerId,
       createdAt: createdAt ?? this.createdAt,
     );
   }
@@ -173,7 +192,10 @@ class Game {
       'courtRate': courtRate,
       'shuttleCockPrice': shuttleCockPrice,
       'divideCourtEqually': divideCourtEqually,
+      'divideShuttleCockEqually': divideShuttleCockEqually,
       'playerIds': playerIds,
+      'payingPlayerId': payingPlayerId,
+      'payingShuttleCockPlayerId': payingShuttleCockPlayerId,
       'createdAt': createdAt.toIso8601String(),
     };
   }
@@ -189,9 +211,13 @@ class Game {
       courtRate: (json['courtRate'] as num).toDouble(),
       shuttleCockPrice: (json['shuttleCockPrice'] as num).toDouble(),
       divideCourtEqually: json['divideCourtEqually'] as bool,
+      divideShuttleCockEqually:
+          json['divideShuttleCockEqually'] as bool? ?? true,
       playerIds: json['playerIds'] != null
           ? List<String>.from(json['playerIds'] as List)
           : [],
+      payingPlayerId: json['payingPlayerId'] as String?,
+      payingShuttleCockPlayerId: json['payingShuttleCockPlayerId'] as String?,
       createdAt: DateTime.parse(json['createdAt'] as String),
     );
   }

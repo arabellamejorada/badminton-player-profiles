@@ -3,25 +3,30 @@ class UserSettings {
   final double courtRate;
   final double shuttleCockPrice;
   final bool divideCourtEqually;
+  final bool divideShuttleCockEqually;
 
   UserSettings({
     required this.courtName,
     required this.courtRate,
     required this.shuttleCockPrice,
     this.divideCourtEqually = true,
+    this.divideShuttleCockEqually = true,
   });
 
-  // Calculate court rate per game (assuming 4 players for doubles)
+  // Calculate court rate per game (default for settings preview)
   double get courtRatePerGame {
     if (divideCourtEqually) {
-      return courtRate / 4;
+      return courtRate / 4; // Default preview divided by 4
     }
     return courtRate;
   }
 
-  // Calculate shuttlecock price per player (assuming 4 players)
+  // Calculate shuttlecock price per player (default for settings preview)
   double get shuttleCockPricePerPlayer {
-    return shuttleCockPrice / 4;
+    if (divideShuttleCockEqually) {
+      return shuttleCockPrice / 4; // Default preview divided by 4
+    }
+    return shuttleCockPrice;
   }
 
   UserSettings copyWith({
@@ -29,12 +34,15 @@ class UserSettings {
     double? courtRate,
     double? shuttleCockPrice,
     bool? divideCourtEqually,
+    bool? divideShuttleCockEqually,
   }) {
     return UserSettings(
       courtName: courtName ?? this.courtName,
       courtRate: courtRate ?? this.courtRate,
       shuttleCockPrice: shuttleCockPrice ?? this.shuttleCockPrice,
       divideCourtEqually: divideCourtEqually ?? this.divideCourtEqually,
+      divideShuttleCockEqually:
+          divideShuttleCockEqually ?? this.divideShuttleCockEqually,
     );
   }
 
@@ -44,6 +52,7 @@ class UserSettings {
       'courtRate': courtRate,
       'shuttleCockPrice': shuttleCockPrice,
       'divideCourtEqually': divideCourtEqually,
+      'divideShuttleCockEqually': divideShuttleCockEqually,
     };
   }
 
@@ -53,6 +62,8 @@ class UserSettings {
       courtRate: (json['courtRate'] as num).toDouble(),
       shuttleCockPrice: (json['shuttleCockPrice'] as num).toDouble(),
       divideCourtEqually: json['divideCourtEqually'] as bool? ?? true,
+      divideShuttleCockEqually:
+          json['divideShuttleCockEqually'] as bool? ?? true,
     );
   }
 }
